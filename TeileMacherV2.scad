@@ -1,6 +1,7 @@
 //TeileMacher V2
 $fn=50;
 xCOff=5;
+zRodRadius=2.5;
 
 module profile(hole=false) {
     import("dxf/profile.dxf");
@@ -16,8 +17,19 @@ module zMotor() {
         zMotorRaw();
     }
 }
-module xCarriageRaw(nut=false,face=false,motor=true,side=false) {
-    offset(r=-0.1)profile();
+l=120;
+w=80;
+module nutCover(nut=false) {
+    difference() {
+        square(28,center=true);
+        tr_xy(x=10)circle(r=1.5);
+        circle(r=zRodRadius);
+        if(nut==true)circle(r=2*zRodRadius*0.9+1.02,$fn=6);
+    }
+}
+
+module xCarriageRaw(nut=false,face=false,motor=true,rods=false) {
+    offset(r=0.2)profile();
     translate([-34,0]) {
         circle(r=2.5);
         if(motor==true)rotate(a=[0,0,90]) {
@@ -26,43 +38,54 @@ module xCarriageRaw(nut=false,face=false,motor=true,side=false) {
         }
     }  
     translate([31.5,0]){
-        circle(r=2.5);
-        if(nut==true)circle(r=5*0.9,$fn=6);
+        circle(r=zRodRadius);
+        if(nut==true)circle(r=2*zRodRadius*0.9+1.02,$fn=6);
+        tr_xy(x=10)circle(r=1.5);
     }
-    if(side==true)tr_xy(x=40,y=15)circle(r=1.5);
-    if(side==false)translate([-10,0])tr_xy(x=50,y=20)circle(r=1.5);
+    
+    translate([0,0])tr_xy(x=l/2-5,y=w/2-5)circle(r=1.5);
+    if(rods==true)for(i=[1,-1])translate([10,i*27])square([l,8],center=true);
+}
+module carriageSheet() {
+    square([l,w],center=true);
 }
 module xCarriage1() {
     difference() {
-        offset(r=xCOff)hull()xCarriageRaw(face=true);
+        carriageSheet(nut=true);
         xCarriageRaw();
     }   
 }
 module xCarriage2() {
     difference() {
-        offset(r=xCOff)hull()xCarriageRaw(face=true);
-        xCarriageRaw(face=true,nut=true);
+        carriageSheet();
+        xCarriageRaw(face=true,,rods=true);
     }   
 }
 module xCarriage3() {
     difference() {
-        offset(r=xCOff)hull()xCarriageRaw(face=true);
-        xCarriageRaw(face=true);
+        carriageSheet();
+        xCarriageRaw(face=true,nut=true);
     }   
 }
 module xCarriage4() {
     difference() {
-        offset(r=xCOff)hull()xCarriageRaw(motor=false,side=true);
-        xCarriageRaw(motor=false,side=true);
+        carriageSheet();
+        xCarriageRaw(motor=false,nut=true,side=true);
     }   
 }
 module xCarriage5() {
     difference() {
-        offset(r=xCOff)hull()xCarriageRaw(motor=false,side=true);
-        xCarriageRaw(motor=false,nut=true,side=true);
+        carriageSheet();
+        xCarriageRaw(motor=false,side=true,rods=true);
     }   
 }
-module angle(profileSize=20,length=60,holeRadius=2.5,number=1) {
+module xCarriage6() {
+    difference() {
+        carriageSheet();
+        xCarriageRaw(motor=false,side=true,nut=true);
+    }   
+}
+module angle(profileSize=20,length=60,holeRadius=2.5,number=1,x=0) {
 i=profileSize/2;
 j=length-profileSize/2;
 	difference() {
@@ -71,7 +94,7 @@ j=length-profileSize/2;
 			square([length,profileSize]);
 		}
 		for(k=[i:((j-i)/number):(j+((j-i)/number))])translate([k,i])circle(r=holeRadius);
-		for(k=[i:((j-i)/(number+1)):(j+((j-i)/(number+1)))])translate([i,k])circle(r=holeRadius);
+		for(k=[i:((j-i)/(number+x)):(j+((j-i)/(number+x)))])translate([i,k])circle(r=holeRadius);
 	}
 }
     
@@ -99,8 +122,12 @@ module tr_xy(x,y=0) {
 
 zMotor(); //2
 xCarriage1(); //1
-xCarriage2(); //2
+xCarriage2(); //1
 xCarriage3(); //1
-xCarriage4(); //2
-xCarriage5(); //2
-!angle();
+xCarriage4(); //1
+xCarriage5(); //1
+xCarriage6(); //1
+nutCover(); //2
+nutCover(nut=true); //2
+angle();
+angle(x=1);
